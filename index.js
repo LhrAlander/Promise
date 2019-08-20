@@ -7,19 +7,27 @@ function MyPromise(excutor) {
   self.onRejectedCallbacks = []
 
   function resolve(value) {
-    if (self.status === 'pending') {
-      self.status = 'fulfilled'
-      self.data = value
-      self.onResolvedCallbacks.forEach(cb => cb(value))
+    if (value instanceof MyPromise) {
+      value.then(resolve, reject)
+      return
     }
+    setTimeout(function () {
+      if (self.status === 'pending') {
+        self.status = 'fulfilled'
+        self.data = value
+        self.onResolvedCallbacks.forEach(cb => cb(value))
+      }
+    })
   }
 
   function reject(error) {
-    if (self.status === 'pending') {
-      self.status = 'rejected'
-      self.data = error
-      self.onRejectedCallbacks.forEach(cb => cb(error))
-    }
+    setTimeout(function () {
+      if (self.status === 'pending') {
+        self.status = 'rejected'
+        self.data = error
+        self.onRejectedCallbacks.forEach(cb => cb(error))
+      }
+    })
   }
 
   try {
@@ -144,3 +152,23 @@ function resolvePromise(promise, x, resolve, reject) {
     resolve(x)
   }
 }
+
+
+let promise1 = new MyPromise(function (resolve, reject) {
+  setTimeout(() => {
+    resolve(1)
+  }, 1000);
+})
+
+promise1
+  .then(value => {
+    console.log(value)
+    return new MyPromise(function (resolve, reject) {
+      setTimeout(() => {
+        resolve(value + 1)
+      }, 1000)
+    })
+  })
+  .then(value => {
+    console.log(value)
+  })
